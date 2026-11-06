@@ -9,7 +9,7 @@
 <title>The Tasting Room — Public Edition</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 <style>
 :root{
   --bg:#fdfcf9; --bg-soft:#f4f0e6; --surface:#ffffff; --ink:#1d2420; --ink-soft:#4c554e;
@@ -50,12 +50,19 @@ header.site{position:sticky;top:0;z-index:60;background:var(--header-bg);color:v
 .socials a{display:inline-flex;width:32px;height:32px;border:1px solid rgba(255,255,255,.35);border-radius:50%;align-items:center;justify-content:center;color:var(--header-ink)}
 .socials a:hover{background:rgba(255,255,255,.14)}
 .socials svg{width:16px;height:16px;fill:currentColor}
-.signin-link{background:none;border:1px solid rgba(255,255,255,.35);color:var(--header-ink);border-radius:999px;padding:7px 14px;font-size:14px;font-weight:600}
+.signin-link{background:none;border:1px solid rgba(255,255,255,.35);color:var(--header-ink);border-radius:999px;padding:7px 14px;font-size:14px;font-weight:400;letter-spacing:.03em}
 .hrow2{border-top:1px solid rgba(255,255,255,.16)}
-nav.main{display:flex;flex-wrap:wrap;gap:2px 4px;padding:7px 0 9px}
-nav.main button{background:none;border:0;color:var(--header-ink);font-size:14.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:6px 10px;border-bottom:2px solid transparent}
+nav.main{display:flex;flex-wrap:nowrap;gap:0 2px;padding:7px 0 9px}
+nav.main button{background:none;border:0;color:var(--header-ink);font-family:"Source Sans 3",system-ui,sans-serif;font-size:13.5px;font-weight:300;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;padding:6px 7px;border-bottom:1px solid transparent}
 nav.main button:hover{color:#fff}
-nav.main button.active{border-bottom-color:var(--gold-soft);color:#fff}
+nav.main button.active{border-bottom-color:var(--gold-soft);color:#fff;font-weight:500}
+.nav-toggle{display:none;align-items:center;gap:10px;background:none;border:0;color:var(--header-ink);font-family:"Source Sans 3",system-ui,sans-serif;font-size:14px;font-weight:400;letter-spacing:.14em;text-transform:uppercase;padding:10px 2px;min-height:44px}
+.nav-toggle .bars{display:inline-flex;flex-direction:column;gap:4px}
+.nav-toggle .bars i{display:block;width:20px;height:1.5px;background:var(--header-ink);border-radius:2px;transition:transform .18s,opacity .18s}
+.nav-toggle[aria-expanded="true"] .bars i:nth-child(1){transform:translateY(5.5px) rotate(45deg)}
+.nav-toggle[aria-expanded="true"] .bars i:nth-child(2){opacity:0}
+.nav-toggle[aria-expanded="true"] .bars i:nth-child(3){transform:translateY(-5.5px) rotate(-45deg)}
+#vintageChart{scroll-margin-top:150px}
 nav.main button.farmers{color:var(--gold-soft)}
 nav.main button.farmers.active{color:#ecd9a8}
 /* ---------- generic ---------- */
@@ -143,23 +150,23 @@ nav.main button.farmers.active{color:#ecd9a8}
 .unit-toggle{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
 .unit-toggle button{border:0;background:var(--surface);color:var(--ink);padding:8px 15px;font-weight:700}
 .unit-toggle button.active{background:var(--green);color:#f5efe0}
-.fdetail{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px 24px;box-shadow:var(--shadow);margin:16px 0 22px}
-.fdetail h2{font-size:32px;margin:0;font-weight:600}
-.fdetail .sub{color:var(--ink-soft);margin:2px 0 14px}
-.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:12px}
-.stat{background:var(--bg-soft);border-radius:10px;padding:12px 14px}
-.stat .lab{font-size:11.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-soft)}
-.stat .val{font-family:"Cormorant Garamond",Georgia,serif;font-size:30px;line-height:1.1;font-weight:600}
-.stat .val small{font-size:15px;color:var(--ink-soft)}
-.days{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:16px}
+.fdetail{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:13px 16px;box-shadow:var(--shadow);margin:10px 0 16px}
+.fdetail h2{font-size:24px;margin:0;font-weight:600}
+.fdetail .sub{color:var(--ink-soft);margin:1px 0 8px;font-size:14.5px}
+.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px}
+.stat{background:var(--bg-soft);border-radius:10px;padding:7px 10px}
+.stat .lab{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft)}
+.stat .val{font-family:"Cormorant Garamond",Georgia,serif;font-size:21px;line-height:1.15;font-weight:600}
+.stat .val small{font-size:12px;color:var(--ink-soft)}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:9px}
 @media(max-width:700px){.days{grid-template-columns:repeat(4,1fr)}}
-.day{background:var(--bg-soft);border-radius:10px;padding:10px 8px;text-align:center;font-size:13.5px}
+.day{background:var(--bg-soft);border-radius:10px;padding:7px 6px;text-align:center;font-size:12.5px;line-height:1.4}
 .day .dn{font-weight:700;letter-spacing:.05em}
 .day .hi{font-weight:700}.day .lo{color:var(--ink-soft)}
-.day .rn{color:#3f6d8e;font-size:12.5px}
-.chartbox{margin-top:20px}
-.chartbox h3{font-size:23px;margin:0 0 2px;font-weight:600}
-.chart-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13.5px;margin:6px 0 4px}
+.day .rn{color:#3f6d8e;font-size:11.5px}
+.chartbox{margin-top:8px}
+.chartbox h3{font-size:19px;margin:0;font-weight:600}
+.chart-legend{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:12.5px;margin:3px 0 2px}
 .chart-legend i{display:inline-block;width:18px;height:4px;border-radius:2px;margin-right:6px;vertical-align:middle}
 #weekChart{width:100%;height:auto}
 #chartTip{position:absolute;pointer-events:none;background:var(--green);color:#f5efe0;border-radius:8px;padding:8px 11px;font-size:13px;line-height:1.45;opacity:0;transition:opacity .12s;z-index:5;white-space:nowrap}
@@ -215,9 +222,8 @@ button,.chip,nav.main button,.fcard,.cell{ touch-action:manipulation }
   .socials{order:4;margin:0 auto;gap:9px}
   .socials a{width:40px;height:40px}
   .socials svg{width:18px;height:18px}
-  /* nav: wraps into a two-row grid of full-height tap targets instead of a sideways swipe */
-  nav.main{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;padding:6px 0 8px}
-  nav.main button{font-size:11.5px;letter-spacing:.04em;padding:8px 2px;min-height:44px;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.2}
+  /* nav: hidden behind the hamburger toggle at this size (see the menu section at the end) */
+  nav.main button{font-size:13px;letter-spacing:.05em;padding:10px 8px;min-height:44px;display:flex;align-items:center;line-height:1.25;text-align:left}
   /* sections & type */
   .section-head{margin:32px 0 4px;gap:8px}
   .section-head h2{font-size:28px;line-height:1.15}
@@ -265,14 +271,14 @@ button,.chip,nav.main button,.fcard,.cell{ touch-action:manipulation }
   .farm-tools input[type=search]{flex:none;width:100%;min-height:48px;font-size:16px;padding:11px 16px}
   .unit-toggle{width:100%}
   .unit-toggle button{flex:1;min-height:44px;padding:10px;font-size:15px}
-  .fdetail{padding:18px 16px;margin:12px 0 18px}
-  .fdetail h2{font-size:27px}
-  .statgrid{grid-template-columns:repeat(2,1fr);gap:10px}
-  .stat{padding:11px 12px}
-  .stat .val{font-size:26px}
-  .days{grid-template-columns:repeat(3,1fr);gap:7px}
-  .day{font-size:13px;padding:9px 6px}
-  .chart-legend{gap:8px 12px;font-size:13px}
+  .fdetail{padding:11px 13px;margin:9px 0 14px}
+  .fdetail h2{font-size:22px}
+  .statgrid{grid-template-columns:repeat(2,1fr);gap:7px}
+  .stat{padding:7px 9px}
+  .stat .val{font-size:20px}
+  .days{grid-template-columns:repeat(3,1fr);gap:6px}
+  .day{font-size:12px;padding:7px 5px}
+  .chart-legend{gap:5px 11px;font-size:12px}
   #chartTip{white-space:normal;width:max-content;max-width:240px;font-size:12.5px}
   /* reader */
   .reader-hero{height:34vh;min-height:220px;margin-top:12px;border-radius:12px}
@@ -307,9 +313,23 @@ button,.chip,nav.main button,.fcard,.cell{ touch-action:manipulation }
   .wordmark{font-size:24px}
   .signin-link{font-size:12.5px;padding:8px 10px}
   .socials a{width:38px;height:38px}
-  nav.main{grid-template-columns:repeat(4,1fr)}
+  nav.main.open{grid-template-columns:1fr}
   .vtable tr{grid-template-columns:repeat(4,1fr)}
   .statgrid{grid-template-columns:repeat(2,1fr)}
+}
+/* ================= MENU: ONE LINE ON DESKTOP, HAMBURGER WHEN NARROW ================= */
+/* The full menu (now including Vintage Chart) stays on a single line while it fits;
+   once the window is too narrow for that, it collapses behind a hamburger toggle
+   instead of wrapping — which is what used to push FARMERS onto a second line. */
+@media (max-width:1100px){
+  .nav-toggle{display:inline-flex}
+  nav.main{display:none}
+  nav.main.open{display:grid;grid-template-columns:1fr 1fr;gap:0 10px;padding:2px 0 10px}
+  nav.main button{border-bottom:1px solid rgba(255,255,255,.12);white-space:normal}
+  nav.main button.active{border-bottom-color:var(--gold-soft)}
+}
+@media (max-width:520px){
+  nav.main.open{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -332,6 +352,7 @@ button,.chip,nav.main button,.fcard,.cell{ touch-action:manipulation }
       <button class="signin-link" data-nav="studio">Publisher Sign-In</button>
     </div>
     <div class="hrow2">
+      <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="mainNav"><span class="bars" aria-hidden="true"><i></i><i></i><i></i></span>Menu</button>
       <nav class="main" id="mainNav" aria-label="Sections">
         <button data-nav="home" class="active">Latest</button>
         <button data-nav="reading">Reading List</button>
@@ -342,6 +363,7 @@ button,.chip,nav.main button,.fcard,.cell{ touch-action:manipulation }
         <button data-cat="Restaurants">Restaurants</button>
         <button data-cat="Travel">Travel</button>
         <button data-cat="Guides">Guides</button>
+        <button data-vintage="1">Vintage Chart</button>
         <button data-nav="farmers" class="farmers">Farmers</button>
       </nav>
     </div>
@@ -391,7 +413,7 @@ button,.chip,nav.main button,.fcard,.cell{ touch-action:manipulation }
       </div>
     </div>
 
-    <div class="section-head">
+    <div class="section-head" id="vintageChart">
       <h2>The Vintage Chart</h2>
       <p>Our own ratings on a 10-point scale — every harvest from 1982 to today, twelve regions, Napa Valley first. Tap any square for the full note.</p>
     </div>
@@ -488,7 +510,8 @@ button,.chip,nav.main button,.fcard,.cell{ touch-action:manipulation }
       <p style="margin:0 0 6px"><b>Sections</b></p>
       <p style="margin:0;line-height:1.9">
         <a href="#" data-cat-link="Recipes">Recipes</a> · <a href="#" data-cat-link="Wine">Wine</a> · <a href="#" data-cat-link="Cocktails">Cocktails</a><br/>
-        <a href="#" data-cat-link="Restaurants">Restaurants</a> · <a href="#" data-cat-link="Travel">Travel</a> · <a href="#" data-cat-link="Guides">Guides</a> · <a href="#" id="footFarmers" style="color:var(--gold);font-weight:700">Farmers</a>
+        <a href="#" data-cat-link="Restaurants">Restaurants</a> · <a href="#" data-cat-link="Travel">Travel</a> · <a href="#" data-cat-link="Guides">Guides</a><br/>
+        <a href="#" id="footVintage">Vintage Chart</a> · <a href="#" id="footFarmers" style="color:var(--gold);font-weight:700">Farmers</a>
       </p>
     </div>
     <div>
@@ -632,15 +655,37 @@ function show(view){
   if (view==="farmers" && !farmersStarted) startFarmers();
   if (view==="reading") renderReading();
 }
+/* Hamburger toggle: the menu collapses behind it whenever the window is too
+   narrow for the full one-line menu (see the max-width:1100px rules). */
+function closeNav(){
+  $("mainNav").classList.remove("open");
+  $("navToggle").setAttribute("aria-expanded","false");
+}
+$("navToggle").addEventListener("click", function(){
+  var open = $("mainNav").classList.toggle("open");
+  $("navToggle").setAttribute("aria-expanded", open ? "true" : "false");
+});
+window.addEventListener("resize", function(){ if (window.innerWidth > 1100) closeNav(); });
+function goVintage(){
+  closeNav();
+  show("home");
+  var el = $("vintageChart");
+  if (el) setTimeout(function(){ el.scrollIntoView({ behavior:"smooth", block:"start" }); }, 60);
+}
 document.querySelectorAll("[data-nav]").forEach(function(b){
   b.addEventListener("click", function(){
+    closeNav();
     if (b.dataset.nav==="home"){ state.cat="All"; state.query=""; $("searchInput").value=""; renderHome(); }
     show(NAVMAP[b.dataset.nav] || "home");
   });
 });
 document.querySelectorAll("[data-cat]").forEach(function(b){
-  b.addEventListener("click", function(){ state.cat=b.dataset.cat; state.query=""; $("searchInput").value=""; renderHome(); show("home"); document.getElementById("latestTitle").scrollIntoView({behavior:"smooth"}); });
+  b.addEventListener("click", function(){ closeNav(); state.cat=b.dataset.cat; state.query=""; $("searchInput").value=""; renderHome(); show("home"); document.getElementById("latestTitle").scrollIntoView({behavior:"smooth"}); });
 });
+document.querySelectorAll("[data-vintage]").forEach(function(b){
+  b.addEventListener("click", function(){ goVintage(); });
+});
+$("footVintage").addEventListener("click", function(e){ e.preventDefault(); goVintage(); });
 document.querySelectorAll("[data-cat-link]").forEach(function(a){
   a.addEventListener("click", function(e){ e.preventDefault(); state.cat=a.dataset.catLink; state.query=""; renderHome(); show("home"); });
 });
@@ -964,13 +1009,13 @@ function renderFarmDetail(){
     + '<div class="stat"><div class="lab">Soil · surface</div><div class="val">'+(soil0==null?"—":dT(soil0))+'</div></div>'
     + '<div class="stat"><div class="lab">Soil · 6 cm down</div><div class="val">'+(soil6==null?"—":dT(soil6))+'</div></div>'
     + '<div class="stat"><div class="lab">Humidity</div><div class="val">'+Math.round(c.relative_humidity_2m)+'<small>%</small></div></div>'
-    + '<div class="stat"><div class="lab">Rain today</div><div class="val" style="font-size:24px;padding-top:5px">'+dRain(j.daily.precipitation_sum[0]||0)+'</div></div>'
+    + '<div class="stat"><div class="lab">Rain today</div><div class="val" style="font-size:17px;padding-top:2px">'+dRain(j.daily.precipitation_sum[0]||0)+'</div></div>'
     + '</div>'
     + '<div class="days">'+days+'</div>'
     + '<div class="chartbox"><h3>The week in four lines</h3>'
     + '<div class="chart-legend"><span><i style="background:#b8892e"></i>Air temperature</span><span><i style="background:#d1603d"></i>Soil · surface</span><span><i style="background:#4a7d4f"></i>Soil · 6 cm down</span><span><i style="background:#3f6d8e"></i>Wind</span></div>'
     + '<div class="chart-rel"><div id="weekChartSlot"></div><div id="chartTip"></div></div>'
-    + '<p style="color:var(--ink-soft);font-size:13px;margin:4px 0 0">A reading every 3 hours for 7 days. Temperatures read on the left axis, wind on the right. Hover or tap a point for the exact figures.</p></div>'
+    + '<p style="color:var(--ink-soft);font-size:12.5px;margin:2px 0 0">A reading every 3 hours for 7 days. Temperatures read on the left axis, wind on the right. Hover or tap a point for the exact figures.</p></div>'
     + '</div>';
   drawChart(j);
 }
@@ -984,7 +1029,7 @@ function drawChart(j){
   var tMin = Math.floor(Math.min.apply(null,tVals)-3), tMax = Math.ceil(Math.max.apply(null,tVals)+3);
   var wMax = Math.ceil(Math.max.apply(null,wVals)*1.15) || 10;
   var narrow = window.innerWidth <= 640;
-  var W = narrow ? 430 : 760, H = narrow ? 330 : 280, L = narrow ? 38 : 46, R = narrow ? 38 : 46, T = 12, B = 30, iw = W-L-R, ih = H-T-B;
+  var W = narrow ? 430 : 760, H = narrow ? 215 : 175, L = narrow ? 38 : 46, R = narrow ? 38 : 46, T = 10, B = 26, iw = W-L-R, ih = H-T-B;
   var fsAxis = narrow ? 14 : 11, fsDay = narrow ? 14 : 11.5, dotR = narrow ? 14 : 9;
   function X(k){ return L + iw * k/(pts.length-1); }
   function YT(v){ return T + ih * (1 - (v-tMin)/(tMax-tMin)); }
