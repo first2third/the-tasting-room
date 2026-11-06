@@ -15,6 +15,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git mv the-tasting-room-index.html index.html
+          git mv -f the-tasting-room-index.html index.html
           git commit -m "Rename file to index.html"
           git push
