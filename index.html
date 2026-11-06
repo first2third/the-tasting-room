@@ -196,6 +196,121 @@ footer.site .cols{display:flex;gap:30px;flex-wrap:wrap;justify-content:space-bet
 footer.site .serif{font-size:22px;color:var(--ink)}
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:var(--green);color:#f5efe0;padding:11px 20px;border-radius:999px;font-size:14.5px;opacity:0;pointer-events:none;transition:.25s;z-index:80;box-shadow:var(--shadow);max-width:90vw;text-align:center}
 .toast.on{opacity:1;transform:translateX(-50%)}
+/* ---------- vintage chart scroller (desktop keeps the swipe, mobile reflows below) ---------- */
+.vtable-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+/* ================= MOBILE PASS ================= */
+button,a,.chip{ -webkit-tap-highlight-color:transparent }
+button,.chip,nav.main button,.fcard,.cell{ touch-action:manipulation }
+@media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} .toast{transition:none} }
+@media (max-width:760px){
+  body{font-size:16.5px;overflow-x:clip}
+  .wrap{padding:0 16px}
+  /* header: wordmark + sign-in on row one, full-width search on row two, socials on row three — nothing to swipe */
+  .hrow1{gap:10px 12px;padding:10px 0 9px}
+  .wordmark{font-size:27px;min-height:44px;display:inline-flex;align-items:center;order:1}
+  .signin-link{order:2;margin-left:auto;min-height:40px;padding:8px 13px;font-size:13.5px;display:inline-flex;align-items:center}
+  .searchbox{order:3;flex:1 1 100%;max-width:none;margin-left:0}
+  .searchbox input{font-size:16px;padding:11px 14px;min-height:44px}
+  .searchbox button{padding:11px 18px;min-height:44px;font-size:15px}
+  .socials{order:4;margin:0 auto;gap:9px}
+  .socials a{width:40px;height:40px}
+  .socials svg{width:18px;height:18px}
+  /* nav: wraps into a two-row grid of full-height tap targets instead of a sideways swipe */
+  nav.main{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;padding:6px 0 8px}
+  nav.main button{font-size:11.5px;letter-spacing:.04em;padding:8px 2px;min-height:44px;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.2}
+  /* sections & type */
+  .section-head{margin:32px 0 4px;gap:8px}
+  .section-head h2{font-size:28px;line-height:1.15}
+  .section-head p{font-size:15.5px}
+  .rule{margin:8px 0 18px}
+  /* cover */
+  .cover{margin-top:12px;border-radius:12px}
+  .cover img{height:38vh;min-height:250px;max-height:340px}
+  .cover .overlay{padding:46px 18px 16px}
+  .cover h1{font-size:clamp(26px,7.4vw,34px)}
+  .cover p{font-size:15.5px;line-height:1.45}
+  .cover .byline{font-size:12px}
+  /* cards & controls */
+  .grid{gap:16px}
+  .card .body{padding:13px 15px 15px}
+  .btn{min-height:44px;display:inline-flex;align-items:center;justify-content:center;padding:11px 20px}
+  .btn.small{min-height:40px;padding:8px 16px}
+  .chip{min-height:44px;padding:10px 15px;font-size:14.5px;display:inline-flex;align-items:center}
+  .chips{gap:7px;margin:12px 0 2px}
+  .save-btn{min-height:38px;padding:7px 13px;font-size:13.5px}
+  .card .meta{flex-wrap:wrap;gap:8px}
+  .empty{padding:24px 18px}
+  /* panels, recipe */
+  .panel{padding:18px 16px}
+  .panel h3{font-size:23px}
+  .scaler .n{width:44px;height:44px;font-size:21px}
+  .scaler output{min-width:96px}
+  /* vintage chart: the wide table becomes stacked region blocks — each year is a labelled tile, no sideways scroll */
+  .vtable-wrap{overflow:visible}
+  .vtable{display:block;width:100%;border-spacing:0}
+  .vtable tr:first-child{display:none}
+  .vtable tr{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:12px 0 14px;border-bottom:1px solid var(--line)}
+  .vtable th.region{grid-column:1/-1;text-align:left;font-size:17px;white-space:normal;padding:0 0 2px;font-family:"Cormorant Garamond",Georgia,serif;font-weight:600}
+  .vtable td{display:block}
+  .cell{min-width:0;height:auto;min-height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:16px;border-radius:8px;padding:5px 2px}
+  .cell::before{content:attr(data-yr);font-size:10px;font-weight:600;letter-spacing:.05em;line-height:1;opacity:.85}
+  .detail{position:static;padding:18px 16px;margin-top:16px}
+  .detail h3{font-size:24px}
+  .detail .big{font-size:48px}
+  .legend{gap:8px 12px;font-size:12.5px}
+  /* farmers */
+  .farm-hero{padding:20px 18px;margin-top:12px;border-radius:12px}
+  .farm-hero p{font-size:15.5px}
+  .farm-tools{flex-direction:column;align-items:stretch;gap:10px;margin:14px 0 4px}
+  .farm-tools input[type=search]{flex:none;width:100%;min-height:48px;font-size:16px;padding:11px 16px}
+  .unit-toggle{width:100%}
+  .unit-toggle button{flex:1;min-height:44px;padding:10px;font-size:15px}
+  .fdetail{padding:18px 16px;margin:12px 0 18px}
+  .fdetail h2{font-size:27px}
+  .statgrid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .stat{padding:11px 12px}
+  .stat .val{font-size:26px}
+  .days{grid-template-columns:repeat(3,1fr);gap:7px}
+  .day{font-size:13px;padding:9px 6px}
+  .chart-legend{gap:8px 12px;font-size:13px}
+  #chartTip{white-space:normal;width:max-content;max-width:240px;font-size:12.5px}
+  /* reader */
+  .reader-hero{height:34vh;min-height:220px;margin-top:12px;border-radius:12px}
+  .reader h1{font-size:clamp(28px,8vw,36px)}
+  .reader .dek{font-size:18px}
+  .reader p.body{font-size:17.5px;line-height:1.68}
+  .reader .meta{gap:8px 12px}
+  /* newsletter, studio, footer, toast */
+  .newsletter{padding:22px 18px;margin:36px 0 8px}
+  .newsletter h2{font-size:26px}
+  .newsletter form{flex-direction:column;gap:10px}
+  .newsletter input{flex:none;width:100%;min-height:50px;font-size:16px;padding:12px 16px}
+  .newsletter .btn{width:100%;min-height:50px}
+  .studio-grid{gap:12px;margin-top:14px}
+  .studio-card{padding:17px 16px}
+  footer.site{margin-top:40px;padding:22px 0 calc(30px + env(safe-area-inset-bottom))}
+  footer.site .cols{flex-direction:column;gap:18px}
+  .toast{bottom:calc(14px + env(safe-area-inset-bottom));width:calc(100vw - 32px);max-width:calc(100vw - 32px)}
+}
+@media (max-width:520px){
+  .grid{grid-template-columns:1fr}
+  .card img{height:190px}
+  .fgrid{grid-template-columns:1fr}
+  .fcard{padding:15px 16px}
+  .fcard .row{font-size:15px}
+  .days{grid-template-columns:repeat(2,1fr)}
+  .ing{columns:1}
+  .studio-grid{grid-template-columns:1fr}
+}
+@media (max-width:380px){
+  .wrap{padding:0 13px}
+  .wordmark{font-size:24px}
+  .signin-link{font-size:12.5px;padding:8px 10px}
+  .socials a{width:38px;height:38px}
+  nav.main{grid-template-columns:repeat(4,1fr)}
+  .vtable tr{grid-template-columns:repeat(4,1fr)}
+  .statgrid{grid-template-columns:repeat(2,1fr)}
+}
 </style>
 </head>
 <body>
@@ -284,7 +399,7 @@ footer.site .serif{font-size:22px;color:var(--ink)}
     <div class="chips" id="decadeTabs" role="group" aria-label="Choose a decade"></div>
     <div class="chart-layout">
       <div>
-        <div style="overflow-x:auto">
+        <div class="vtable-wrap">
           <table class="vtable" id="vtable" aria-label="Vintage ratings"></table>
         </div>
         <div class="legend">
@@ -691,9 +806,9 @@ function renderChart(){
   REGIONS.forEach(function(r, ri){
     html += "<tr><th class='region'>"+r.name+"</th>" + years.map(function(y){
       var s = scoreFor(ri, y);
-      if (s === null) return '<td><button class="cell none" data-cell="'+ri+':'+y+'" aria-label="'+r.name+' '+y+', not yet rated">–</button></td>';
+      if (s === null) return '<td><button class="cell none" data-yr="'+y+'" data-cell="'+ri+':'+y+'" aria-label="'+r.name+' '+y+', not yet rated">–</button></td>';
       var sel = state.sel && state.sel.r===ri && state.sel.y===y ? " sel" : "";
-      return '<td><button class="cell s'+s+sel+'" data-cell="'+ri+':'+y+'" aria-label="'+r.name+' '+y+', rated '+s+' of 10">'+s+'</button></td>';
+      return '<td><button class="cell s'+s+sel+'" data-yr="'+y+'" data-cell="'+ri+':'+y+'" aria-label="'+r.name+' '+y+', rated '+s+' of 10">'+s+'</button></td>';
     }).join("") + "</tr>";
   });
   $("vtable").innerHTML = html;
@@ -868,7 +983,9 @@ function drawChart(j){
   pts.forEach(function(i){ tVals.push(dTval(air[i]), dTval(s0[i]), dTval(s6[i])); wVals.push(dWval(wd[i])); });
   var tMin = Math.floor(Math.min.apply(null,tVals)-3), tMax = Math.ceil(Math.max.apply(null,tVals)+3);
   var wMax = Math.ceil(Math.max.apply(null,wVals)*1.15) || 10;
-  var W = 760, H = 280, L = 46, R = 46, T = 12, B = 30, iw = W-L-R, ih = H-T-B;
+  var narrow = window.innerWidth <= 640;
+  var W = narrow ? 430 : 760, H = narrow ? 330 : 280, L = narrow ? 38 : 46, R = narrow ? 38 : 46, T = 12, B = 30, iw = W-L-R, ih = H-T-B;
+  var fsAxis = narrow ? 14 : 11, fsDay = narrow ? 14 : 11.5, dotR = narrow ? 14 : 9;
   function X(k){ return L + iw * k/(pts.length-1); }
   function YT(v){ return T + ih * (1 - (v-tMin)/(tMax-tMin)); }
   function YW(v){ return T + ih * (1 - v/wMax); }
@@ -880,17 +997,17 @@ function drawChart(j){
   for (var g=0; g<=4; g++){
     var v = tMin + (tMax-tMin)*g/4, y = YT(v);
     grid += '<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y+'" y2="'+y+'" stroke="var(--line)" stroke-width="1"/>'
-      + '<text x="'+(L-6)+'" y="'+(y+4)+'" text-anchor="end" font-size="11" fill="var(--ink-soft)">'+Math.round(v)+'°</text>'
-      + '<text x="'+(W-R+6)+'" y="'+(y+4)+'" font-size="11" fill="var(--ink-soft)">'+Math.round(wMax*g/4)+'</text>';
+      + '<text x="'+(L-6)+'" y="'+(y+4)+'" text-anchor="end" font-size="'+fsAxis+'" fill="var(--ink-soft)">'+Math.round(v)+'°</text>'
+      + '<text x="'+(W-R+6)+'" y="'+(y+4)+'" font-size="'+fsAxis+'" fill="var(--ink-soft)">'+Math.round(wMax*g/4)+'</text>';
   }
   var dayLab = "";
   for (var d=0; d<7; d++){
     var k0 = Math.round(d*(pts.length-1)/7), dt = new Date(h.time[pts[k0]].slice(0,10)+"T12:00:00");
-    dayLab += '<text x="'+X(k0)+'" y="'+(H-8)+'" font-size="11.5" fill="var(--ink-soft)">'+["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][dt.getDay()]+'</text>';
+    dayLab += '<text x="'+X(k0)+'" y="'+(H-8)+'" font-size="'+fsDay+'" fill="var(--ink-soft)">'+["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][dt.getDay()]+'</text>';
     if (d>0) dayLab += '<line x1="'+X(k0)+'" x2="'+X(k0)+'" y1="'+T+'" y2="'+(T+ih)+'" stroke="var(--line)" stroke-width="1" stroke-dasharray="3 4"/>';
   }
   var dots = pts.map(function(idx,k){
-    return '<circle class="cp" data-k="'+k+'" cx="'+X(k)+'" cy="'+YT(dTval(air[idx]))+'" r="9" fill="transparent"/>';
+    return '<circle class="cp" data-k="'+k+'" cx="'+X(k)+'" cy="'+YT(dTval(air[idx]))+'" r="'+dotR+'" fill="transparent"/>';
   }).join("");
   $("weekChartSlot").innerHTML = '<svg id="weekChart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Seven-day chart of air temperature, soil temperatures and wind">'
     + grid + dayLab
@@ -917,6 +1034,15 @@ function drawChart(j){
 $("farmSearch").addEventListener("input", function(){ farmState.query = $("farmSearch").value.trim().toLowerCase(); if (farmCurrent!==null || true) renderFarmGrid(); });
 $("unitF").addEventListener("click", function(){ farmState.unit="F"; $("unitF").classList.add("active"); $("unitC").classList.remove("active"); renderFarmGrid(); if (farmDetail) renderFarmDetail(); });
 $("unitC").addEventListener("click", function(){ farmState.unit="C"; $("unitC").classList.add("active"); $("unitF").classList.remove("active"); renderFarmGrid(); if (farmDetail) renderFarmDetail(); });
+/* Redraw the week chart at the right scale when the phone rotates or the window resizes */
+var rszT = null, lastNarrow = window.innerWidth <= 640;
+window.addEventListener("resize", function(){
+  var nowNarrow = window.innerWidth <= 640;
+  if (nowNarrow === lastNarrow) return;
+  lastNarrow = nowNarrow;
+  clearTimeout(rszT);
+  rszT = setTimeout(function(){ if (farmDetail && state.view === "farmers") drawChart(farmDetail); }, 200);
+});
 </script>
 </body>
 </html>
