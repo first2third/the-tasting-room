@@ -51,6 +51,11 @@ header.site{position:sticky;top:0;z-index:60;background:var(--header-bg);color:v
 .socials a:hover{background:rgba(255,255,255,.14)}
 .socials svg{width:16px;height:16px;fill:currentColor}
 .signin-link{background:none;border:1px solid rgba(255,255,255,.35);color:var(--header-ink);border-radius:999px;padding:7px 14px;font-size:14px;font-weight:400;letter-spacing:.03em}
+.subscribe-link{background:var(--gold);border-color:var(--gold);color:#1d1503;font-weight:700}
+.subscribe-link:hover{background:var(--gold-soft);border-color:var(--gold-soft)}
+#newsletter{scroll-margin-top:150px}
+.footer-signin{background:none;border:0;padding:0;color:var(--ink);font:inherit;text-decoration:underline;text-underline-offset:3px}
+.footer-signin:hover{color:var(--green-2)}
 .hrow2{border-top:1px solid rgba(255,255,255,.16)}
 nav.main{display:flex;flex-wrap:nowrap;gap:0 2px;padding:7px 0 9px}
 nav.main button{background:none;border:0;color:var(--header-ink);font-family:"Source Sans 3",system-ui,sans-serif;font-size:13.5px;font-weight:300;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;padding:6px 7px;border-bottom:1px solid transparent}
@@ -349,7 +354,7 @@ button,.chip,nav.main button,.fcard,.cell{ touch-action:manipulation }
         <a href="https://www.pinterest.com" target="_blank" rel="noopener" aria-label="Pinterest"><svg viewBox="0 0 24 24"><path d="M12 4a8 8 0 0 0-2.9 15.4c-.1-.7-.2-1.7 0-2.4l1.2-4.9s-.3-.6-.3-1.5c0-1.4.8-2.4 1.8-2.4.9 0 1.3.6 1.3 1.4 0 .9-.6 2.2-.9 3.4-.2 1 .5 1.9 1.6 1.9 1.9 0 3.3-2 3.3-4.8 0-2.5-1.8-4.3-4.4-4.3a4.6 4.6 0 0 0-4.8 4.6c0 .9.4 1.9.8 2.4.1.1.1.2.1.3l-.3 1.2c0 .2-.2.2-.4.1-1.2-.6-2-2.3-2-3.8 0-3.1 2.3-6 6.6-6 3.4 0 6.1 2.5 6.1 5.7 0 3.4-2.2 6.2-5.2 6.2-1 0-2-.5-2.3-1.1l-.6 2.4c-.2.9-.8 2-1.2 2.6A8 8 0 1 0 12 4z"/></svg></a>
         <a href="https://www.youtube.com" target="_blank" rel="noopener" aria-label="YouTube"><svg viewBox="0 0 24 24"><path d="M21.6 7.2a2.5 2.5 0 0 0-1.8-1.8C18.2 5 12 5 12 5s-6.2 0-7.8.4A2.5 2.5 0 0 0 2.4 7.2 26 26 0 0 0 2 12a26 26 0 0 0 .4 4.8 2.5 2.5 0 0 0 1.8 1.8c1.6.4 7.8.4 7.8.4s6.2 0 7.8-.4a2.5 2.5 0 0 0 1.8-1.8A26 26 0 0 0 22 12a26 26 0 0 0-.4-4.8zM10 15.2V8.8L15.5 12 10 15.2z"/></svg></a>
       </div>
-      <button class="signin-link" data-nav="studio">Publisher Sign-In</button>
+      <button class="signin-link subscribe-link" id="headerSubscribe" type="button">Subscribe</button>
     </div>
     <div class="hrow2">
       <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="mainNav"><span class="bars" aria-hidden="true"><i></i><i></i><i></i></span>Menu</button>
@@ -436,7 +441,7 @@ button,.chip,nav.main button,.fcard,.cell{ touch-action:manipulation }
       <aside class="detail" id="chartDetail" aria-live="polite"></aside>
     </div>
 
-    <div class="newsletter">
+    <div class="newsletter" id="newsletter">
       <h2>The Tasting Room, weekly</h2>
       <p>One email each Friday at 9:00 AM — the week's stories, the vintage of the moment, and one recipe worth your weekend. A monthly edition lands with the first issue of each month.</p>
       <form id="newsForm">
@@ -517,6 +522,10 @@ button,.chip,nav.main button,.fcard,.cell{ touch-action:manipulation }
     <div>
       <p style="margin:0 0 6px"><b>Data</b></p>
       <p style="margin:0;line-height:1.9">Vintage ratings are our own.<br/>Farmers' readings: <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a>, live at page open.</p>
+    </div>
+    <div>
+      <p style="margin:0 0 6px"><b>Publisher</b></p>
+      <p style="margin:0;line-height:1.9"><button class="footer-signin" id="footSignIn" type="button">Publisher Sign-In</button></p>
     </div>
   </div>
 </footer>
@@ -690,6 +699,14 @@ document.querySelectorAll("[data-cat-link]").forEach(function(a){
   a.addEventListener("click", function(e){ e.preventDefault(); state.cat=a.dataset.catLink; state.query=""; renderHome(); show("home"); });
 });
 $("footFarmers").addEventListener("click", function(e){ e.preventDefault(); show("farmers"); });
+function goSubscribe(){
+  closeNav();
+  show("home");
+  var el = $("newsletter");
+  if (el) setTimeout(function(){ el.scrollIntoView({ behavior:"smooth", block:"start" }); var inp = $("newsEmail"); if (inp) setTimeout(function(){ try{ inp.focus({ preventScroll:true }); }catch(err){ inp.focus(); } }, 500); }, 60);
+}
+$("headerSubscribe").addEventListener("click", function(){ goSubscribe(); });
+$("footSignIn").addEventListener("click", function(){ show("studio"); window.scrollTo({ top:0, behavior:"smooth" }); });
 $("searchForm").addEventListener("submit", function(e){
   e.preventDefault();
   state.query = $("searchInput").value.trim().toLowerCase(); state.cat="All";
