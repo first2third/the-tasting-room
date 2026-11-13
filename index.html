@@ -471,7 +471,7 @@ button,.chip,nav.main button,.fcard,.cell{ touch-action:manipulation }
     <div class="farm-hero">
       <div class="kicker" style="color:var(--gold-soft)">For the growers</div>
       <h1>Conditions in the world's wine regions</h1>
-      <p>Live weather, wind, and soil temperature — at the surface and 6&nbsp;cm down — for 55 wine-growing regions, the numbers that decide irrigation, frost watches, and harvest timing. Readings come from Open-Meteo and load fresh each time you open this page.</p>
+      <p>Live weather, wind, and soil temperature — at the surface and 6&nbsp;cm down — for 55 wine-growing regions, the numbers that decide irrigation, frost watches, and harvest timing. Readings come from Open-Meteo and load fresh each time you open this page; if Open-Meteo cannot be reached, air, wind, humidity and rain fall back to MET Norway and are labeled “via MET Norway”.</p>
     </div>
     <div class="farm-tools">
       <input type="search" id="farmSearch" placeholder="Search regions — try “Napa” or “Mosel”…" aria-label="Search wine regions" />
@@ -521,7 +521,7 @@ button,.chip,nav.main button,.fcard,.cell{ touch-action:manipulation }
     </div>
     <div>
       <p style="margin:0 0 6px"><b>Data</b></p>
-      <p style="margin:0;line-height:1.9">Vintage ratings are our own.<br/>Farmers' readings: <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a>, live at page open.</p>
+      <p style="margin:0;line-height:1.9">Vintage ratings are our own.<br/>Farmers' readings: <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a>, live at page open, with <a href="https://www.met.no" target="_blank" rel="noopener">MET Norway</a> as fallback.</p>
     </div>
     <div>
       <p style="margin:0 0 6px"><b>Publisher</b></p>
@@ -935,6 +935,120 @@ function dW(mph){ return farmState.unit==="F" ? Math.round(mph) + " mph" : Math.
 function dWval(mph){ return farmState.unit==="F" ? mph : mph*1.609; }
 function dRain(mm){ return farmState.unit==="F" ? (mm/25.4).toFixed(2)+" in" : mm.toFixed(1)+" mm"; }
 
+/* ---------- weather source fallback: Open-Meteo first, MET Norway second ----------
+   Internal readings are stored in °F / mph (as Open-Meteo was asked for them).
+   MET Norway publishes °C and m/s, and does NOT publish soil temperature or gusts,
+   so those are converted here and soil/gusts are never invented in fallback mode. */
+var farmSource = "openmeteo", farmDetailSource = "openmeteo", farmSoilCache = {};
+function fetchJSON(url, ms){
+  return new Promise(function(resolve, reject){
+    var ctl = ("AbortController" in window) ? new AbortController() : null;
+    var timer = setTimeout(function(){ if (ctl) ctl.abort(); reject(new Error("timeout")); }, ms || 12000);
+    fetch(url, ctl ? { signal: ctl.signal } : {}).then(function(r){
+      if (!r.ok) throw new Error("http " + r.status);
+      return r.json();
+    }).then(function(j){ clearTimeout(timer); resolve(j); }).catch(function(e){ clearTimeout(timer); reject(e); });
+  });
+}
+function cToF(c){ return c == null ? null : c * 9 / 5 + 32; }
+function msToMph(v){ return v == null ? null : v * 2.23694; }
+function metCode(sym){
+  if (!sym) return 2;
+  var s = sym.replace(/_(day|night|polartwilight)$/, "");
+  if (s.indexOf("thunder") >= 0) return 95;
+  if (s.indexOf("snow") >= 0) return s.indexOf("heavy") >= 0 ? 75 : (s.indexOf("light") >= 0 ? 71 : 73);
+  if (s.indexOf("sleet") >= 0) return 61;
+  if (s.indexOf("rain") >= 0) return s.indexOf("heavy") >= 0 ? 65 : (s.indexOf("light") >= 0 ? 61 : 63);
+  if (s === "clearsky") return 0;
+  if (s === "fair") return 1;
+  if (s === "partlycloudy") return 2;
+  if (s === "cloudy") return 3;
+  if (s === "fog") return 45;
+  return 2;
+}
+function metSymbol(entry, which){
+  var d = entry.data || {};
+  var b = d[which] || d.next_1_hours || d.next_6_hours || d.next_12_hours;
+  return b && b.summary ? b.summary.symbol_code : "";
+}
+function metPrecip(entry, stepH){
+  var d = entry.data || {};
+  if (stepH <= 1.5 && d.next_1_hours && d.next_1_hours.details && d.next_1_hours.details.precipitation_amount != null) return d.next_1_hours.details.precipitation_amount;
+  if (d.next_6_hours && d.next_6_hours.details && d.next_6_hours.details.precipitation_amount != null) return d.next_6_hours.details.precipitation_amount;
+  if (d.next_1_hours && d.next_1_hours.details && d.next_1_hours.details.precipitation_amount != null) return d.next_1_hours.details.precipitation_amount;
+  return 0;
+}
+function metCurrent(entry){
+  var det = entry.data.instant.details;
+  return {
+    time: entry.time.slice(0, 16),
+    temperature_2m: cToF(det.air_temperature),
+    relative_humidity_2m: det.relative_humidity,
+    weather_code: metCode(metSymbol(entry, "next_1_hours")),
+    wind_speed_10m: msToMph(det.wind_speed),
+    wind_direction_10m: det.wind_from_direction,
+    wind_gusts_10m: det.wind_speed_of_gust == null ? null : msToMph(det.wind_speed_of_gust)
+  };
+}
+function metUrl(r){ return "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=" + r[3] + "&lon=" + r[4]; }
+function fetchMetCurrentAll(done){
+  var out = [];
+  for (var z = 0; z < FREGIONS.length; z++) out.push(null);
+  var idx = 0, BATCH = 8;
+  function step(){
+    if (idx >= FREGIONS.length){ done(out); return; }
+    var slice = [];
+    for (var k = idx; k < Math.min(idx + BATCH, FREGIONS.length); k++) slice.push(k);
+    idx += BATCH;
+    Promise.all(slice.map(function(i){
+      return fetchJSON(metUrl(FREGIONS[i]), 15000).then(function(j){
+        var ts = j && j.properties ? j.properties.timeseries : null;
+        if (ts && ts.length) out[i] = { current: metCurrent(ts[0]) };
+      }).catch(function(){});
+    })).then(step);
+  }
+  step();
+}
+function buildMetDetail(j){
+  var ts = j.properties.timeseries;
+  var times = [], temps = [], winds = [], soils0 = [], soils6 = [];
+  var dayMap = {}, dayOrder = [];
+  ts.forEach(function(e, ei){
+    var det = e.data.instant.details;
+    var t = e.time.slice(0, 16), tv = cToF(det.air_temperature);
+    times.push(t); temps.push(tv); winds.push(msToMph(det.wind_speed)); soils0.push(null); soils6.push(null);
+    var day = t.slice(0, 10);
+    var stepH = ei + 1 < ts.length ? (new Date(ts[ei + 1].time) - new Date(e.time)) / 3600000 : 6;
+    if (!(stepH > 0)) stepH = 6;
+    if (!dayMap[day]){ dayMap[day] = { max: tv, min: tv, precip: 0, code: metCode(metSymbol(e, "next_6_hours")) }; dayOrder.push(day); }
+    var dm = dayMap[day];
+    if (tv > dm.max) dm.max = tv;
+    if (tv < dm.min) dm.min = tv;
+    dm.precip += metPrecip(e, stepH);
+    if (t.slice(11, 13) === "12") dm.code = metCode(metSymbol(e, "next_6_hours"));
+  });
+  var daily = { time: [], weather_code: [], temperature_2m_max: [], temperature_2m_min: [], precipitation_sum: [] };
+  dayOrder.slice(0, 7).forEach(function(day){
+    daily.time.push(day);
+    daily.weather_code.push(dayMap[day].code);
+    daily.temperature_2m_max.push(dayMap[day].max);
+    daily.temperature_2m_min.push(dayMap[day].min);
+    daily.precipitation_sum.push(dayMap[day].precip);
+  });
+  return { _source: "met", current: metCurrent(ts[0]),
+    hourly: { time: times, temperature_2m: temps, soil_temperature_0cm: soils0, soil_temperature_6cm: soils6, wind_speed_10m: winds },
+    daily: daily };
+}
+function cacheSoil(i, j){
+  try {
+    var c = j.current, h = j.hourly, nowH = c.time.slice(0, 13);
+    var hi = h.time.findIndex(function(t){ return t.slice(0, 13) === nowH; });
+    if (hi < 0) hi = 0;
+    var s0 = h.soil_temperature_0cm[hi], s6 = h.soil_temperature_6cm[hi];
+    if (s0 != null || s6 != null) farmSoilCache[i] = { soil0: s0, soil6: s6, time: c.time };
+  } catch (e) {}
+}
+
 function startFarmers(){
   farmersStarted = true;
   $("contChips").innerHTML = CONTINENTS.map(function(c){
@@ -952,15 +1066,33 @@ function fetchFarmCurrent(){
   var url = "https://api.open-meteo.com/v1/forecast?latitude="+lats+"&longitude="+lons
     + "&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m"
     + "&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto";
-  fetch(url).then(function(r){ return r.json(); }).then(function(j){
-    farmCurrent = Array.isArray(j) ? j : [j];
-    var t = farmCurrent[0] && farmCurrent[0].current ? farmCurrent[0].current.time.replace("T"," ") : "";
+  fetchJSON(url, 12000).then(function(j){
+    var arr = Array.isArray(j) ? j : [j];
+    if (!arr[0] || !arr[0].current) throw new Error("Open-Meteo returned no readings");
+    farmCurrent = arr;
+    farmSource = "openmeteo";
+    var t = farmCurrent[0].current.time.replace("T"," ");
     $("farmStatus").textContent = "Live readings from Open-Meteo · updated " + t + " (first region's local time) · tap any region for its full week.";
     renderFarmGrid();
     selectFarm(farmState.sel);
   }).catch(function(){
-    $("farmStatus").textContent = "Live readings could not be reached just now — Open-Meteo may be briefly unavailable. The region list below is complete; reopen this page in a little while to load conditions.";
-    renderFarmGrid();
+    /* Open-Meteo unreachable — fall back to MET Norway for the air readings. */
+    fetchMetCurrentAll(function(out){
+      var got = out.filter(function(x){ return x; });
+      if (!got.length){
+        farmCurrent = null;
+        farmSource = "none";
+        $("farmStatus").textContent = "Live readings could not be reached just now — Open-Meteo may be briefly unavailable. The region list below is complete; reopen this page in a little while to load conditions.";
+        renderFarmGrid();
+        return;
+      }
+      farmCurrent = out;
+      farmSource = "met";
+      var t = got[0].current.time.replace("T"," ");
+      $("farmStatus").textContent = "Live readings via MET Norway · Open-Meteo could not be reached, so air temperature, wind, humidity and rain are via MET Norway · updated " + t + " UTC (first region) · tap any region for its full week. MET Norway does not publish soil temperature, so soil readings show the last good Open-Meteo value where we have one, or read unavailable.";
+      renderFarmGrid();
+      selectFarm(farmState.sel);
+    });
   });
 }
 function farmCard(i){
@@ -996,20 +1128,50 @@ function selectFarm(i){
     + "&hourly=temperature_2m,soil_temperature_0cm,soil_temperature_6cm,wind_speed_10m"
     + "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum"
     + "&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=7";
-  fetch(url).then(function(x){ return x.json(); }).then(function(j){
+  fetchJSON(url, 12000).then(function(j){
     if (farmState.sel !== i) return;
+    if (!j || !j.current || !j.hourly || !j.daily) throw new Error("Open-Meteo returned no detail");
+    j._source = "openmeteo";
     farmDetail = j;
+    farmDetailSource = "openmeteo";
+    cacheSoil(i, j);
     renderFarmDetail();
   }).catch(function(){
     if (farmState.sel !== i) return;
-    $("farmDetail").innerHTML = '<div class="fdetail"><h2>'+r[0]+'</h2><p class="sub">'+r[1]+' · '+r[2]+'</p><p>The detailed forecast could not be loaded just now. The card readings above are the latest available.</p></div>';
+    /* Open-Meteo unreachable for this region — fall back to MET Norway. */
+    fetchJSON(metUrl(r), 15000).then(function(mj){
+      if (farmState.sel !== i) return;
+      if (!mj || !mj.properties || !mj.properties.timeseries || !mj.properties.timeseries.length) throw new Error("MET Norway returned no detail");
+      farmDetail = buildMetDetail(mj);
+      farmDetailSource = "met";
+      renderFarmDetail();
+    }).catch(function(){
+      if (farmState.sel !== i) return;
+      $("farmDetail").innerHTML = '<div class="fdetail"><h2>'+r[0]+'</h2><p class="sub">'+r[1]+' · '+r[2]+'</p><p>The detailed forecast could not be loaded just now. The card readings above are the latest available.</p></div>';
+    });
   });
 }
 function renderFarmDetail(){
   var j = farmDetail, r = FREGIONS[farmState.sel], c = j.current, h = j.hourly;
+  var isMet = j._source === "met";
   var nowH = c.time.slice(0,13);
   var hi = h.time.findIndex(function(t){ return t.slice(0,13) === nowH; }); if (hi < 0) hi = 0;
-  var soil0 = h.soil_temperature_0cm[hi], soil6 = h.soil_temperature_6cm[hi];
+  var soil0, soil6, soilCached = false;
+  if (isMet){
+    /* MET Norway does not publish soil temperature: use only the last good
+       Open-Meteo value cached this visit, labeled as such — never a guess. */
+    var cached = farmSoilCache[farmState.sel];
+    soil0 = cached ? cached.soil0 : null;
+    soil6 = cached ? cached.soil6 : null;
+    soilCached = !!(cached && (soil0 != null || soil6 != null));
+  } else {
+    soil0 = h.soil_temperature_0cm[hi];
+    soil6 = h.soil_temperature_6cm[hi];
+  }
+  function soilVal(v){
+    if (v == null) return '<span style="font-size:15px">Unavailable</span>';
+    return dT(v) + (soilCached ? ' <small>last good reading</small>' : '');
+  }
   var days = j.daily.time.map(function(d, k){
     var dt = new Date(d + "T12:00:00");
     var dn = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][dt.getDay()];
@@ -1017,22 +1179,29 @@ function renderFarmDetail(){
       + '<div><span class="hi">'+dT(j.daily.temperature_2m_max[k])+'</span> · <span class="lo">'+dT(j.daily.temperature_2m_min[k])+'</span></div>'
       + '<div class="rn">Rain '+dRain(j.daily.precipitation_sum[k]||0)+'</div></div>';
   }).join("");
+  var sourceNote = isMet
+    ? '<p style="color:var(--ink-soft);font-size:14px;margin:0 0 8px">Open-Meteo could not be reached, so the air temperature, wind, humidity and rain here are <b>via MET Norway</b>. MET Norway does not publish soil temperature — the soil figures show the last good Open-Meteo reading from this visit where we have one, and otherwise read unavailable.</p>'
+    : '';
+  var legend = isMet
+    ? '<div class="chart-legend"><span><i style="background:#b8892e"></i>Air temperature</span><span><i style="background:#3f6d8e"></i>Wind</span><span>Soil lines unavailable via MET Norway</span></div>'
+    : '<div class="chart-legend"><span><i style="background:#b8892e"></i>Air temperature</span><span><i style="background:#d1603d"></i>Soil · surface</span><span><i style="background:#4a7d4f"></i>Soil · 6 cm down</span><span><i style="background:#3f6d8e"></i>Wind</span></div>';
   $("farmDetail").innerHTML =
-    '<div class="fdetail"><h2>'+r[0]+'</h2><p class="sub">'+r[1]+' · '+r[2]+' · '+wlabel(c.weather_code)+' · reading at '+c.time.replace("T"," ")+' local</p>'
+    '<div class="fdetail"><h2>'+r[0]+'</h2><p class="sub">'+r[1]+' · '+r[2]+' · '+wlabel(c.weather_code)+' · reading at '+c.time.replace("T"," ")+(isMet ? ' UTC · via MET Norway' : ' local')+'</p>'
+    + sourceNote
     + '<div class="statgrid">'
     + '<div class="stat"><div class="lab">Air temp</div><div class="val">'+dT(c.temperature_2m)+'</div></div>'
     + '<div class="stat"><div class="lab">Wind</div><div class="val">'+dW(c.wind_speed_10m)+' <small>'+compass(c.wind_direction_10m)+'</small></div></div>'
-    + '<div class="stat"><div class="lab">Gusts</div><div class="val">'+dW(c.wind_gusts_10m)+'</div></div>'
-    + '<div class="stat"><div class="lab">Soil · surface</div><div class="val">'+(soil0==null?"—":dT(soil0))+'</div></div>'
-    + '<div class="stat"><div class="lab">Soil · 6 cm down</div><div class="val">'+(soil6==null?"—":dT(soil6))+'</div></div>'
-    + '<div class="stat"><div class="lab">Humidity</div><div class="val">'+Math.round(c.relative_humidity_2m)+'<small>%</small></div></div>'
+    + '<div class="stat"><div class="lab">Gusts</div><div class="val">'+(c.wind_gusts_10m == null ? '<span style="font-size:15px">Unavailable</span>' : dW(c.wind_gusts_10m))+'</div></div>'
+    + '<div class="stat"><div class="lab">Soil · surface</div><div class="val">'+soilVal(soil0)+'</div></div>'
+    + '<div class="stat"><div class="lab">Soil · 6 cm down</div><div class="val">'+soilVal(soil6)+'</div></div>'
+    + '<div class="stat"><div class="lab">Humidity</div><div class="val">'+(c.relative_humidity_2m == null ? '<span style="font-size:15px">Unavailable</span>' : Math.round(c.relative_humidity_2m)+'<small>%</small>')+'</div></div>'
     + '<div class="stat"><div class="lab">Rain today</div><div class="val" style="font-size:17px;padding-top:2px">'+dRain(j.daily.precipitation_sum[0]||0)+'</div></div>'
     + '</div>'
     + '<div class="days">'+days+'</div>'
-    + '<div class="chartbox"><h3>The week in four lines</h3>'
-    + '<div class="chart-legend"><span><i style="background:#b8892e"></i>Air temperature</span><span><i style="background:#d1603d"></i>Soil · surface</span><span><i style="background:#4a7d4f"></i>Soil · 6 cm down</span><span><i style="background:#3f6d8e"></i>Wind</span></div>'
+    + '<div class="chartbox"><h3>'+(isMet ? 'The week in two lines — via MET Norway' : 'The week in four lines')+'</h3>'
+    + legend
     + '<div class="chart-rel"><div id="weekChartSlot"></div><div id="chartTip"></div></div>'
-    + '<p style="color:var(--ink-soft);font-size:12.5px;margin:2px 0 0">A reading every 3 hours for 7 days. Temperatures read on the left axis, wind on the right. Hover or tap a point for the exact figures.</p></div>'
+    + '<p style="color:var(--ink-soft);font-size:12.5px;margin:2px 0 0">'+(isMet ? 'Air temperature and wind via MET Norway for the week ahead. Temperatures read on the left axis, wind on the right. Hover or tap a point for the exact figures.' : 'A reading every 3 hours for 7 days. Temperatures read on the left axis, wind on the right. Hover or tap a point for the exact figures.')+'</p></div>'
     + '</div>';
   drawChart(j);
 }
@@ -1041,8 +1210,9 @@ function drawChart(j){
   var pts = [];
   for (var i=0;i<n;i+=3) pts.push(i);
   var air = fillNulls(h.temperature_2m), s0 = fillNulls(h.soil_temperature_0cm), s6 = fillNulls(h.soil_temperature_6cm), wd = fillNulls(h.wind_speed_10m);
+  var hasS0 = s0.some(function(v){ return v != null; }), hasS6 = s6.some(function(v){ return v != null; });
   var tVals = [], wVals = [];
-  pts.forEach(function(i){ tVals.push(dTval(air[i]), dTval(s0[i]), dTval(s6[i])); wVals.push(dWval(wd[i])); });
+  pts.forEach(function(i){ tVals.push(dTval(air[i])); if (hasS0 && s0[i] != null) tVals.push(dTval(s0[i])); if (hasS6 && s6[i] != null) tVals.push(dTval(s6[i])); wVals.push(dWval(wd[i])); });
   var tMin = Math.floor(Math.min.apply(null,tVals)-3), tMax = Math.ceil(Math.max.apply(null,tVals)+3);
   var wMax = Math.ceil(Math.max.apply(null,wVals)*1.15) || 10;
   var narrow = window.innerWidth <= 640;
@@ -1074,15 +1244,15 @@ function drawChart(j){
   $("weekChartSlot").innerHTML = '<svg id="weekChart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Seven-day chart of air temperature, soil temperatures and wind">'
     + grid + dayLab
     + line(function(i){ return dTval(air[i]); }, YT, "#b8892e")
-    + line(function(i){ return dTval(s0[i]); }, YT, "#d1603d")
-    + line(function(i){ return dTval(s6[i]); }, YT, "#4a7d4f")
+    + (hasS0 ? line(function(i){ return dTval(s0[i]); }, YT, "#d1603d") : "")
+    + (hasS6 ? line(function(i){ return dTval(s6[i]); }, YT, "#4a7d4f") : "")
     + line(function(i){ return dWval(wd[i]); }, YW, "#3f6d8e")
     + dots + '</svg>';
   var tip = $("chartTip"), svg = $("weekChart");
   svg.querySelectorAll(".cp").forEach(function(dot){
     function showTip(){
       var k = +dot.dataset.k, idx = pts[k], t = h.time[idx];
-      tip.innerHTML = "<b>"+t.slice(5,10)+" · "+t.slice(11,16)+"</b><br/>Air "+dT(air[idx])+" · Soil "+dT(s0[idx])+" / "+dT(s6[idx])+"<br/>Wind "+dW(wd[idx]);
+      tip.innerHTML = "<b>"+t.slice(5,10)+" · "+t.slice(11,16)+"</b><br/>Air "+dT(air[idx])+(hasS0 && s0[idx] != null ? " · Soil "+dT(s0[idx])+" / "+dT(s6[idx]) : " · Soil unavailable")+"<br/>Wind "+dW(wd[idx]);
       var rel = svg.parentElement.getBoundingClientRect(), pt = dot.getBoundingClientRect();
       tip.style.left = Math.max(0, Math.min(rel.width-150, pt.left - rel.left - 60)) + "px";
       tip.style.top = (pt.top - rel.top - 78) + "px";
